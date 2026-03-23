@@ -36,4 +36,26 @@ def hello_template(nickname):
 def age(age):
     return render_template("age.html", age=age)
 
+@app.route("/loop")
+def loop():
+    data = ["Python", "Flask", "HTML", "CSS", "VScode"]
+    return render_template("loop.html", items=data)
+
+@app.route("/dictators")
+def dictators():
+    dictators = [{"name": "Netanyahu",
+                  "status": "alive",
+                  "body_count": "over 50000",
+                  "country": "Country placed in Palestine"},
+                  {"name": "Adolf",
+                  "status": "unknown",
+                  "body_count": "a lot",
+                  "country": "Fur Deutschland"},
+                  {"name": "Donald T",
+                  "status": "agent",
+                  "body_count": "idk",
+                  "country": "Fur Deutschland"}
+                 ]
+    return render_template("dictators.html", dictators=dictators)
+
 app.run(debug=True)

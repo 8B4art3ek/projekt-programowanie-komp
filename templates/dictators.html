@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h2>Ulubieni dyktatorzy:</h2>
+    <table border="solid 1px black">
+        {% for dictator in dictators %}
+        <tr>
+            <td>name: {{dictator.name}}</td>
+            <td>status: {{dictator.status}}</td>
+            <td>body_count: {{dictator.body_count}}</td>
+            <td>country: {{dictator.country}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
