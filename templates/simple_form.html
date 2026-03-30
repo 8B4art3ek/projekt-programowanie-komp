@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple form</title>
+    <style>
+        body{
+            font-family: Arial, Helvetica, sans-serif;
+            background: #020024;
+            background: linear-gradient(90deg, rgba(2, 0, 36, 1) 0%, rgba(9, 9, 121, 1) 0%, rgba(0, 212, 255, 1) 100%);
+        }
+        #container {
+            background-color: white;
+            
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <section id="container">
+            <h2>Podaj nazwe dyktatora:</h2>
+            <form action="" method="post">
+                <input type="text" name="dictatorName" placeholder="Nazwa dyktatora">
+                <button type="submit">Wyślij dyktatora</button>
+            </form>
+            {% if dictatorName %}
+            <h3>Przesłany dyktator: {{ dictatorName }}</h3>
+            {% endif %}
+            {% if error %}
+            <h3 style="color: red;">Błąd: {{ error }}</h3>
+            {% endif %}
+        </section>
+    </main>
+</body>
+
+</html>
