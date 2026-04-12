@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %} Strona Główna {% endblock %}
+{% block content %}
+    <header>
+        <h1>Strona Główna</h1>
+    </header>
+
+    <nav>
+        <h3 style="color: var(--text-muted); margin-bottom: 16px;">Wybierz moduł:</h3>
+        <ul>
+            <li><a href="{{ url_for('simple_form') }}">Formularz dyktatora</a></li>
+            <li><a href="{{ url_for('calc') }}">Kalkulator</a></li>
+        </ul>
+    </nav>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %} Formularz {% endblock %}
+
+{% block content %}
+    <h2>Podaj nazwe dyktatora:</h2>
+    <form action="" method="post">
+        <input type="text" name="dictatorName" placeholder="Nazwa dyktatora" autocomplete="off">
+        <button type="submit">Wyślij dyktatora</button>
+    </form>
+
+    {% if dictatorName %}
+    <h3 class="result">Przesłany dyktator: {{ dictatorName }}</h3>
+    {% endif %}
+
+    {% if error %}
+    <h3 class="error">Błąd: {{ error }}</h3>
+    {% endif %}
+
+    <div style="margin-top: 20px;">
+        <a href="{{ url_for('index') }}" style="color: var(--text-muted); text-decoration: none;">&larr; Powrót</a>
+    </div>
+{% endblock %}
