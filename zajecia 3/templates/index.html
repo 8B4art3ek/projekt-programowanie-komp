@@ -1,18 +1,31 @@
 <!DOCTYPE html>
 <html lang="pl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}ToDo List{% endblock %}</title>
 </head>
+
 <body>
     <header>
         <h1>ToDo List App</h1>
-        <a href="{{ url_for('index') }}">Home</a>     <!--- Nazwa funkcji z pythona jest w nawiasie -->
+        <a href="{{ url_for('index') }}">Home</a> <!--- Nazwa funkcji z pythona jest w nawiasie -->
         <a href="{{ url_for('ping_db') }}">Ping</a>
+        <a href="{{ url_for('list_tasks') }}">List</a>
     </header>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for msg in messages %}
+                <div style="color: green; font-weight: bold;">
+                    {{ msg }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
     {% block content %}
-        Witaj w aplikacji ToDo List
+    Witaj w aplikacji ToDo List
     {% endblock %}
 </body>
+
 </html>

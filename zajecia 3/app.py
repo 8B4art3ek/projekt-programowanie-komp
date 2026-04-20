@@ -1,7 +1,9 @@
-from flask import Flask, render_template, g
+from flask import Flask, render_template, g, request, url_for, redirect, flash
+import secrets
 import sqlite3
 
 app = Flask(__name__)
+app.config["SECRET_KEY"] = secrets.token_urlsafe(16)
 DATABASE = "todo.db"
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS tasks (
@@ -50,15 +52,40 @@ def seed_db():
     else:
         print("Tabela tasks zawiera dane, nie wypełniam jej przykładowymi danymi")    
 
-@app.route("/")
-def index():
-    return render_template("index.html")
-
 @app.route("/ping-db")
 def ping_db():
     db = get_db()
     db.execute("SELECT 1;").fetchone()
     return render_template("ping.html")
+
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+@app.route("/list_tasks")
+def list_tasks():
+    db = get_db()
+    tasks = db.execute("SELECT id, title, done, created_at FROM tasks ORDER BY created_at DESC;").fetchall()
+    return render_template("list_tasks.html", tasks = tasks)
+
+@app.route("/add_task", methods=["GET", "POST"])
+def add_task():
+    if request.method == "POST":
+        title = request.form.get("title").strip()
+        if len(title) < 4:
+            flash("Tytuł musi mieć przynajmniej 4 znaki")
+            return render_template("add_task.html", title=title)
+        db = get_db()
+        existingTask = db.execute("SELECT id FROM tasks WHERE title LIKE ?", [title]).fetchone()
+        if existingTask:
+            flash("Istnieje już zadanie o takim tytule")
+            return render_template("add_task.html", title=title)
+        db.execute("INSERT INTO tasks(title, done) VALUES (?, ?)", [title, 0])
+        db.commit()
+        flash("Dodano zadanie")
+        return redirect(url_for("list_tasks"))            # przekierowanie do listy tasków i przeładowanie
+
+    return render_template("add_task.html")
 
 if __name__ == "__main__":
     app.run(debug=True)
