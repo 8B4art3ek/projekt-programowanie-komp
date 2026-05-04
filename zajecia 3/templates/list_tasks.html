@@ -14,8 +14,15 @@
                     {% else %}
                         ❌
                     {% endif %}
-                    {{ task["title"] }}
+                    <a href="{{url_for('task', task_id=task['id'])}}">{{ task["title"] }}</a>
                     <small>({{task["created_at"]}})</small>
+                    <form action="{{url_for('update_task_status', task_id=task['id'])}}" method="post">
+                        <input type="hidden" name="view_name" value="list_tasks">
+                        <button type="submit">Zmień status</button>
+                    </form>
+                    <form action="{{url_for('delete_task', task_id=task['id'])}}" method="post">
+                        <button type="submit">Usuń</button>
+                    </form>
                 </li>
             {% endfor %}
         </ul>

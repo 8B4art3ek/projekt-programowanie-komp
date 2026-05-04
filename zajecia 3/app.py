@@ -87,5 +87,46 @@ def add_task():
 
     return render_template("add_task.html")
 
+@app.route("/tasks/<int:task_id>/status", methods=["POST"])
+def update_task_status(task_id):
+    db = get_db()
+    db.execute("UPDATE tasks SET done = NOT done WHERE id = ?", [task_id])
+    db.commit()
+    flash("Zaaktualizowano status zadania.")
+    view_name = request.form.get("view_name")
+    if view_name == "task":
+        return redirect(url_for("task", task_id = task_id)) 
+    return redirect(url_for("list_tasks"))  
+
+@app.route("/tasks/<int:task_id>/title", methods=["POST"])
+def update_task_title(task_id):
+    title = request.form.get("title")
+    if len(title) < 4:
+        flash("Tytuł musi mieć przynajmniej 4 znaki")
+        return redirect(url_for("task", task_id = task_id)) 
+    db = get_db()
+    existingTask = db.execute("SELECT id FROM tasks WHERE title LIKE ?", [title]).fetchone()
+    if existingTask:
+        flash("Istnieje już zadanie o takim tytule")
+        return redirect(url_for("task", task_id = task_id)) 
+    db.execute("UPDATE tasks SET title = ? WHERE id = ?", [title, task_id])
+    db.commit()
+    flash("Zaaktualizowano tytuł zadania.")
+    return redirect(url_for("task", task_id = task_id)) 
+
+@app.route("/tasks/<int:task_id>/delete", methods=["POST"])
+def delete_task(task_id):
+    db = get_db()
+    db.execute("DELETE FROM tasks WHERE id = ?", [task_id])
+    db.commit()
+    flash("Usunięto zadanie.")
+    return redirect(url_for("list_tasks"))  
+
+@app.route("/tasks/<int:task_id>")
+def task(task_id):
+    db = get_db()
+    task = db.execute("SELECT id, title, done, created_at FROM tasks WHERE id = ?;", [task_id]).fetchone()
+    return render_template("task.html", task = task)
+
 if __name__ == "__main__":
     app.run(debug=True)

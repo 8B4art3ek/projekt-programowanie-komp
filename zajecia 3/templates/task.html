@@ -1,0 +1,25 @@
+{% extends "index.html" %}
+{% block title %}ToDo List {{task["title"]}}{% endblock %}
+{% block content %}
+    <h2>{{ task["title"] }}</h2>
+    Status: {% if task["done"] %}
+        ✔️
+        {% else %}
+        ❌
+    {% endif %}
+    Data utworzenia: {{ task["created_at"] }}
+    <small>({{task["created_at"]}})</small>
+    <form action="{{url_for('update_task_title', task_id=task['id'])}}" method="post">
+        <input type="text" name="title" placeholder="Nowy tytuł">
+        <button type="submit">Zmień tytuł</button>
+    </form>
+    <form action="{{url_for('update_task_status', task_id=task['id'])}}" method="post">
+        <input type="hidden" name="view_name" value="task">
+        <button type="submit">Zmień status</button>
+    </form>
+    <form action="{{url_for('delete_task', task_id=task['id'])}}" method="post">
+        <button type="submit">Usuń</button>
+    </form>
+    <br><br>
+    <a href="{{ url_for('list_tasks') }}">Powrót</a>
+{% endblock %}
