@@ -1,4 +1,4 @@
-from flask import Flask, render_template, g, request, url_for, redirect, flash
+from flask import Flask, render_template, g, request, url_for, redirect, flash, jsonify, abort
 import secrets
 import sqlite3
 
@@ -127,6 +127,45 @@ def task(task_id):
     db = get_db()
     task = db.execute("SELECT id, title, done, created_at FROM tasks WHERE id = ?;", [task_id]).fetchone()
     return render_template("task.html", task = task)
+
+@app.route("/api/tasks", methods=["GET"])
+def api_tasks_list():
+    db = get_db()
+    rows = db.execute("SELECT id, title, done, created_at FROM tasks ORDER BY created_at DESC;").fetchall()
+    return jsonify([dict(row) for row in rows]) 
+# curl http://127.0.0.1:5000/api/tasks
+
+@app.route("/api/tasks/<int:task_id>", methods=["GET"])
+def api_tasks_get(task_id):
+    db = get_db()
+    row = db.execute("SELECT id, title, done, created_at FROM tasks WHERE id = ?;", [task_id]).fetchone()
+    if row is None:
+        abort(404, description="Task not found")
+    return jsonify([dict(row)])
+
+@app.route("/api/tasks", methods=["POST"])
+def api_tasks_add():
+    data = request.get_json(silent=True)
+    if not data or "title" not in data:
+        abort(400, description="Missing JSON or title")
+
+    title = data["title"].strip()
+    if len(title) < 4:
+        abort(400, description="Title must have at least 4 chars")
+    db = get_db()
+    existingTask = db.execute("SELECT id FROM tasks WHERE title LIKE ?", [title]).fetchone()
+    if existingTask:
+        abort(400, description="There already is a task with this title")
+
+    done = 1 if data.get("done") else 0
+    cur = db.execute("INSERT INTO tasks (title, done) VALUES (?, ?)", [title, done])
+    db.commit()
+    task_id = cur.lastrowid
+    row = db.execute("SELECT id, title, done, created_at FROM tasks WHERE id = ?;", [task_id]).fetchone()
+    return jsonify([dict(row)]), 201
+# curl -X POST http://127.0.0.1:5000/api/tasks -H "Content-Type: application/json" -d '{"title": "task"}'
+
+    
 
 if __name__ == "__main__":
     app.run(debug=True)
