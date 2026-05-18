@@ -1,21 +1,7 @@
 from flask import Blueprint, g, jsonify, abort, request
-import sqlite3
+from db import get_db
 
 api = Blueprint("api", __name__)
-
-DATABASE = "todo.db"
-
-
-def get_db():
-    if "db" not in g:  # g - globalna zmienna flaskowa
-        conn = sqlite3.connect(DATABASE)
-        conn.row_factory = sqlite3.Row
-        conn.execute(
-            "PRAGMA foreign_keys = ON;"
-        )  # zapytanie włączające obsługę kluczy obcych
-        g.db = conn
-    return g.db
-
 
 @api.route("/tasks", methods=["GET"])
 def api_tasks_list():

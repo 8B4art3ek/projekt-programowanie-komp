@@ -9,7 +9,6 @@ app.config["SECRET_KEY"] = secrets.token_urlsafe(16)
 app.register_blueprint(api, url_prefix="/api")
 app.register_blueprint(web)
 
-DATABASE = "todo.db"
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS tasks (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -21,14 +20,6 @@ created_at TEXT NOT NULL DEFAULT (datetime('now'))
 CREATE INDEX IF NOT EXISTS idx_tasks_done ON tasks(done);
 CREATE INDEX IF NOT EXISTS idx_tasks_created ON tasks(created_at);
 """
-
-def get_db():
-    if "db" not in g:        # g - globalna zmienna flaskowa
-        conn = sqlite3.connect(DATABASE)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA foreign_keys = ON;")          # zapytanie włączające obsługę kluczy obcych
-        g.db = conn
-    return g.db
 
 @app.teardown_appcontext
 def close_db(exception):

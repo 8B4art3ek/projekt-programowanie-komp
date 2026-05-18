@@ -1,20 +1,7 @@
 from flask import Flask, render_template, g, request, url_for, redirect, flash, Blueprint
-import sqlite3
+from db import get_db
 
 web = Blueprint("web", __name__)
-
-DATABASE = "todo.db"
-
-
-def get_db():
-    if "db" not in g:  # g - globalna zmienna flaskowa
-        conn = sqlite3.connect(DATABASE)
-        conn.row_factory = sqlite3.Row
-        conn.execute(
-            "PRAGMA foreign_keys = ON;"
-        )  # zapytanie włączające obsługę kluczy obcych
-        g.db = conn
-    return g.db
 
 @web.route("/ping-db")
 def ping_db():
