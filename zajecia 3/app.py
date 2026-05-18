@@ -2,7 +2,7 @@ from flask import Flask, g
 from api.routes import api
 from web.routes import web
 import secrets
-import sqlite3
+from db import get_db
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = secrets.token_urlsafe(16)
