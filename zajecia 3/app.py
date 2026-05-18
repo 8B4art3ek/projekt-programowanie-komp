@@ -1,9 +1,14 @@
-from flask import Flask, render_template, g, request, url_for, redirect, flash, jsonify, abort
+from flask import Flask, g
+from api.routes import api
+from web.routes import web
 import secrets
 import sqlite3
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = secrets.token_urlsafe(16)
+app.register_blueprint(api, url_prefix="/api")
+app.register_blueprint(web)
+
 DATABASE = "todo.db"
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS tasks (
@@ -52,156 +57,8 @@ def seed_db():
     else:
         print("Tabela tasks zawiera dane, nie wypełniam jej przykładowymi danymi")    
 
-@app.route("/ping-db")
-def ping_db():
-    db = get_db()
-    db.execute("SELECT 1;").fetchone()
-    return render_template("ping.html")
 
-@app.route("/")
-def index():
-    return render_template("index.html")
 
-@app.route("/list_tasks")
-def list_tasks():
-    db = get_db()
-    tasks = db.execute("SELECT id, title, done, created_at FROM tasks ORDER BY created_at DESC;").fetchall()
-    return render_template("list_tasks.html", tasks = tasks)
-
-@app.route("/add_task", methods=["GET", "POST"])
-def add_task():
-    if request.method == "POST":
-        title = request.form.get("title").strip()
-        if len(title) < 4:
-            flash("Tytuł musi mieć przynajmniej 4 znaki")
-            return render_template("add_task.html", title=title)
-        db = get_db()
-        existingTask = db.execute("SELECT id FROM tasks WHERE title LIKE ?", [title]).fetchone()
-        if existingTask:
-            flash("Istnieje już zadanie o takim tytule")
-            return render_template("add_task.html", title=title)
-        db.execute("INSERT INTO tasks(title, done) VALUES (?, ?)", [title, 0])
-        db.commit()
-        flash("Dodano zadanie")
-        return redirect(url_for("list_tasks"))            # przekierowanie do listy tasków i przeładowanie
-
-    return render_template("add_task.html")
-
-@app.route("/tasks/<int:task_id>/status", methods=["POST"])
-def update_task_status(task_id):
-    db = get_db()
-    db.execute("UPDATE tasks SET done = NOT done WHERE id = ?", [task_id])
-    db.commit()
-    flash("Zaaktualizowano status zadania.")
-    view_name = request.form.get("view_name")
-    if view_name == "task":
-        return redirect(url_for("task", task_id = task_id)) 
-    return redirect(url_for("list_tasks"))  
-
-@app.route("/tasks/<int:task_id>/title", methods=["POST"])
-def update_task_title(task_id):
-    title = request.form.get("title")
-    if len(title) < 4:
-        flash("Tytuł musi mieć przynajmniej 4 znaki")
-        return redirect(url_for("task", task_id = task_id)) 
-    db = get_db()
-    existingTask = db.execute("SELECT id FROM tasks WHERE title LIKE ?", [title]).fetchone()
-    if existingTask:
-        flash("Istnieje już zadanie o takim tytule")
-        return redirect(url_for("task", task_id = task_id)) 
-    db.execute("UPDATE tasks SET title = ? WHERE id = ?", [title, task_id])
-    db.commit()
-    flash("Zaaktualizowano tytuł zadania.")
-    return redirect(url_for("task", task_id = task_id)) 
-
-@app.route("/tasks/<int:task_id>/delete", methods=["POST"])
-def delete_task(task_id):
-    db = get_db()
-    db.execute("DELETE FROM tasks WHERE id = ?", [task_id])
-    db.commit()
-    flash("Usunięto zadanie.")
-    return redirect(url_for("list_tasks"))  
-
-@app.route("/tasks/<int:task_id>")
-def task(task_id):
-    db = get_db()
-    task = db.execute("SELECT id, title, done, created_at FROM tasks WHERE id = ?;", [task_id]).fetchone()
-    return render_template("task.html", task = task)
-
-@app.route("/api/tasks", methods=["GET"])
-def api_tasks_list():
-    db = get_db()
-    rows = db.execute("SELECT id, title, done, created_at FROM tasks ORDER BY created_at DESC;").fetchall()
-    return jsonify([dict(row) for row in rows]) 
-# curl http://127.0.0.1:5000/api/tasks
-
-@app.route("/api/tasks/<int:task_id>", methods=["GET"])
-def api_tasks_get(task_id):
-    db = get_db()
-    row = db.execute("SELECT id, title, done, created_at FROM tasks WHERE id = ?;", [task_id]).fetchone()
-    if row is None:
-        abort(404, description="Task not found")
-    return jsonify([dict(row)])
-
-@app.route("/api/tasks", methods=["POST"])
-def api_tasks_add():
-    data = request.get_json(silent=True)
-    if not data or "title" not in data:
-        abort(400, description="Missing JSON or title")
-
-    title = data["title"].strip()
-    if len(title) < 4:
-        abort(400, description="Title must have at least 4 chars")
-    db = get_db()
-    existingTask = db.execute("SELECT id FROM tasks WHERE title LIKE ?", [title]).fetchone()
-    if existingTask:
-        abort(400, description="There already is a task with this title")
-
-    done = 1 if data.get("done") else 0
-    cur = db.execute("INSERT INTO tasks (title, done) VALUES (?, ?)", [title, done])
-    db.commit()
-    task_id = cur.lastrowid
-    row = db.execute("SELECT id, title, done, created_at FROM tasks WHERE id = ?;", [task_id]).fetchone()
-    return jsonify([dict(row)]), 201
-# curl -X POST http://127.0.0.1:5000/api/tasks -H "Content-Type: application/json" -d '{"title": "task"}'
-
-@app.route("/api/tasks/<int:task_id>", methods=["PUT", "PATCH"])
-def api_tasks_update(task_id):
-    db = get_db()
-    row = db.execute("SELECT id FROM tasks WHERE id = ?", [task_id]).fetchone()
-    if row is None:
-        abort(404, description="Task not found")
-    
-    data = request.get_json()
-    if not data:
-        abort(400, description="Missing JSON")
-    title = data.get("title")
-    done = data.get("done")
-
-    if title:
-        title = title.strip()
-        if len(title) < 4:
-            abort(400, description="Title must have at least 4 chars")
-        existingTask = db.execute("SELECT id FROM tasks WHERE title LIKE ?", [title]).fetchone()
-        if existingTask:
-            abort(400, description="There already is a task with this title")
-        db.execute("UPDATE tasks SET title = ? WHERE id = ?", [title, task_id])
-    if done:
-        db.execute("UPDATE tasks SET done = ? WHERE id = ?", [done, task_id])
-    db.commit()
-    updated_row = db.execute("SELECT id, title, done, created_at FROM tasks WHERE id = ?", [task_id]).fetchone()
-    return jsonify(dict(updated_row))
-
-@app.route("/api/tasks/<int:task_id>", methods=["DELETE"])
-def api_tasks_delete(task_id):
-    db = get_db()
-    cur = db.execute("DELETE FROM tasks WHERE id = ?", [task_id])
-    db.commit()
-
-    if cur.rowcount == 0:
-        abort(404, description="Task not found")
-
-    return "", 204
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -10,9 +10,9 @@
 <body>
     <header>
         <h1>ToDo List App</h1>
-        <a href="{{ url_for('index') }}">Home</a> <!--- Nazwa funkcji z pythona jest w nawiasie -->
-        <a href="{{ url_for('ping_db') }}">Ping</a>
-        <a href="{{ url_for('list_tasks') }}">List</a>
+        <a href="{{ url_for('web.index') }}">Home</a> <!--- Nazwa funkcji z pythona jest w nawiasie -->
+        <a href="{{ url_for('web.ping_db') }}">Ping</a>
+        <a href="{{ url_for('web.list_tasks') }}">List</a>
     </header>
     {% with messages = get_flashed_messages() %}
         {% if messages %}
