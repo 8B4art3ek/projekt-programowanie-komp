@@ -9,18 +9,6 @@ app.config["SECRET_KEY"] = secrets.token_urlsafe(16)
 app.register_blueprint(api, url_prefix="/api")
 app.register_blueprint(web)
 
-SCHEMA_SQL = """
-CREATE TABLE IF NOT EXISTS tasks (
-id INTEGER PRIMARY KEY AUTOINCREMENT,
-title TEXT NOT NULL,
-done INTEGER NOT NULL DEFAULT 0 CHECK (done IN (0,1)),
-created_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
-CREATE INDEX IF NOT EXISTS idx_tasks_done ON tasks(done);
-CREATE INDEX IF NOT EXISTS idx_tasks_created ON tasks(created_at);
-"""
-
 @app.teardown_appcontext
 def close_db(exception):
     db = g.pop("db", None)
